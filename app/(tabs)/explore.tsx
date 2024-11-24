@@ -3,6 +3,9 @@ import { View, Text, ScrollView, Pressable, StyleSheet, Modal, Image } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import { useColorScheme } from 'react-native';
+import { Typography } from '../../constants/Typography';
+import { CommonStyles } from '../../constants/CommonStyles';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { VoiceCall } from '../../components/VoiceCall';
 import { UserProfile } from '../../components/UserProfile';
 import { ChatInterface } from '../../components/ChatInterface';
@@ -43,28 +46,32 @@ const FriendItem: React.FC<FriendItemProps> = ({
 
   return (
     <Pressable
-      style={[styles.friendItem, { backgroundColor: colors.background }]}
+      style={[styles.friendItem, { backgroundColor: colors.messageInput }]}
       onPress={onPress}
-      android_ripple={{ color: colors.ripple }}
     >
-      <Pressable style={styles.avatarContainer} onPress={onProfilePress}>
-        <Image
-          source={{ uri: avatar }}
-          style={styles.avatar}
-        />
-        <View style={[styles.status, { backgroundColor: getStatusColor(status) }]} />
+      <Pressable 
+        style={styles.avatarContainer} 
+        onPress={onProfilePress}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Image source={{ uri: avatar }} style={styles.avatar} />
+        <View style={[styles.status, { 
+          backgroundColor: getStatusColor(status),
+          borderColor: colors.background 
+        }]} />
       </Pressable>
       <View style={styles.friendInfo}>
-        <Text style={[styles.name, { color: colors.text }]}>{name}</Text>
-        <Text style={[styles.statusText, { color: colors.icon }]}>{status}</Text>
+        <Text style={[styles.name, Typography.headline, { color: colors.text }]}>{name}</Text>
+        <Text style={[styles.statusText, Typography.footnote, { color: colors.secondaryText }]}>
+          {status}
+        </Text>
       </View>
       <View style={styles.actions}>
         <Pressable
-          style={styles.actionButton}
+          style={[CommonStyles.button, styles.actionButton]}
           onPress={onCallPress}
-          android_ripple={{ color: colors.ripple }}
         >
-          <Ionicons name="call" size={20} color={colors.icon} />
+          <Ionicons name="call-outline" size={22} color={colors.icon} />
         </Pressable>
       </View>
     </Pressable>
@@ -96,10 +103,15 @@ export default function ExploreScreen() {
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.background }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Friends</Text>
-        <View style={styles.tabs}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={[styles.header, { borderBottomColor: colors.divider }]}>
+        <Text style={[styles.title, Typography.title2, { color: colors.text }]}>Friends</Text>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={styles.tabs}
+          contentContainerStyle={styles.tabsContent}
+        >
           {tabs.map((tab) => (
             <Pressable
               key={tab.id}
@@ -114,6 +126,7 @@ export default function ExploreScreen() {
               <Text
                 style={[
                   styles.tabText,
+                  Typography.callout,
                   { color: selectedTab === tab.id ? '#fff' : colors.text },
                 ]}
               >
@@ -121,10 +134,14 @@ export default function ExploreScreen() {
               </Text>
             </Pressable>
           ))}
-        </View>
+        </ScrollView>
       </View>
 
-      <ScrollView style={styles.friendsList}>
+      <ScrollView 
+        style={styles.friendsList}
+        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator={false}
+      >
         {mockFriends.map((friend) => (
           <FriendItem
             key={friend.id}
@@ -184,7 +201,7 @@ export default function ExploreScreen() {
         }}
         user={chatUser}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -193,27 +210,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.discord.divider,
+    paddingTop: 8,
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
     marginBottom: 16,
   },
   tabs: {
-    flexDirection: 'row',
+    flexGrow: 0,
+    height: 44,
+  },
+  tabsContent: {
+    paddingRight: 16,
     gap: 8,
   },
   tab: {
+    height: 32,
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '500',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   friendsList: {
     flex: 1,
@@ -221,32 +238,42 @@ const styles = StyleSheet.create({
   friendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
+    minHeight: 64,
     marginHorizontal: 16,
     marginVertical: 4,
+    padding: 12,
+    borderRadius: 12,
+    ...CommonStyles.shadow,
   },
   avatarContainer: {
     position: 'relative',
+    width: 44,
+    height: 44,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
   status: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    bottom: -2,
+    right: -2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     borderWidth: 2,
-    borderColor: Colors.discord.background,
   },
   friendInfo: {
     flex: 1,
     marginLeft: 12,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    backgroundColor: 'transparent',
   },
   name: {
     fontSize: 16,
@@ -254,13 +281,10 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 14,
+    color: Colors.light.secondaryText,
   },
-  actions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  actionButton: {
-    padding: 8,
-    borderRadius: 20,
+  tabText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

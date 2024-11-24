@@ -90,7 +90,7 @@ export const ChannelHistory: React.FC<ChannelHistoryProps> = ({
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="fullScreen"
+      presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -258,8 +258,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 8,
     paddingBottom: Platform.OS === 'ios' ? 24 : 8,
-    borderTopWidth: 1,
-    borderTopColor: Colors.discord.divider,
   },
   attachButton: {
     padding: 8,

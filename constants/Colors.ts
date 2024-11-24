@@ -7,11 +7,19 @@ const discordGreen = '#57F287';
 const discordYellow = '#FEE75C';
 const discordFuchsia = '#EB459E';
 const discordRed = '#ED4245';
+const discordGray = '#95a5a6';
+const discordBackground = '#36393f';
 
 export const Colors = {
   light: {
-    text: '#2E3338',
+    primary: '#007AFF',
+    secondary: '#5856D6',
     background: '#FFFFFF',
+    secondaryBackground: '#F2F2F7',
+    groupedBackground: '#FFFFFF',
+    text: '#000000',
+    secondaryText: '#6D6D72',
+    separator: '#C6C6C8',
     tint: discordBlurple,
     icon: '#747F8D',
     tabIconDefault: '#747F8D',
@@ -22,8 +30,14 @@ export const Colors = {
     divider: '#E3E5E8',
   },
   dark: {
-    text: '#DCDDDE',
-    background: '#313338',
+    primary: '#0A84FF',
+    secondary: '#5E5CE6',
+    background: '#000000',
+    secondaryBackground: '#1C1C1E',
+    groupedBackground: '#1C1C1E',
+    text: '#FFFFFF',
+    secondaryText: '#8E8E93',
+    separator: '#38383A',
     tint: discordBlurple,
     icon: '#B9BBBE',
     tabIconDefault: '#B9BBBE',
@@ -39,5 +53,7 @@ export const Colors = {
     yellow: discordYellow,
     fuchsia: discordFuchsia,
     red: discordRed,
+    gray: discordGray,
+    background: discordBackground,
   }
 };

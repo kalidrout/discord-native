@@ -24,6 +24,12 @@ interface Participant {
 interface VoiceCallProps {
   visible: boolean;
   onClose: () => void;
+  user?: {
+    id: number;
+    name: string;
+    status: string;
+    avatar: string;
+  } | null;
 }
 
 const mockParticipants: Participant[] = [
@@ -53,7 +59,7 @@ const mockParticipants: Participant[] = [
   },
 ];
 
-export const VoiceCall: React.FC<VoiceCallProps> = ({ visible, onClose }) => {
+export const VoiceCall: React.FC<VoiceCallProps> = ({ visible, onClose, user }) => {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
   const [isMuted, setIsMuted] = useState(false);

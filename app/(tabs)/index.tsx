@@ -4,19 +4,27 @@ import ChannelList from '../../components/ChannelList';
 import { ChatInterface } from '../../components/ChatInterface';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/Colors';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from 'react';
 
 export default function TabOneScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
+  const [showChat, setShowChat] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={styles.container} edges={['top', 'right', 'left']}>
       <View style={styles.content}>
         <ServerList />
         <ChannelList />
-        <ChatInterface />
+        <ChatInterface 
+          visible={showChat}
+          onClose={() => setShowChat(false)}
+          user={selectedUser}
+        />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
