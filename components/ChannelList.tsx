@@ -1,269 +1,140 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { useColorScheme } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { UserSettings } from './UserSettings';
-import { ChannelHistory } from './ChannelHistory';
-import { useDiscord } from '../context/DiscordContext';
-import { UserIndicator } from './UserIndicator';
-import { Typography } from '../constants/Typography';
-
-interface DirectMessage {
-  id: string;
-  username: string;
-  avatar: string;
-  status: 'online' | 'idle' | 'dnd' | 'offline';
-  lastMessage?: string;
-  timestamp?: string;
-}
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../context/AuthContext';
+import { database } from '../services/database';
+import { AddChannelModal } from './AddChannelModal';
 
 interface Channel {
   id: string;
   name: string;
   type: 'text' | 'voice' | 'announcement';
-  categoryId: string;
+  unread?: boolean;
+  icon?: string;
 }
 
 interface Category {
   id: string;
   name: string;
   channels: Channel[];
+  collapsed?: boolean;
 }
 
-export default function ChannelList() {
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
-    'info': true,
-    'text': true,
-    'voice': true,
-  });
-  const [showServerMenu, setShowServerMenu] = useState(false);
-  const [isSettingsVisible, setSettingsVisible] = useState(false);
-  const [showChannelHistory, setShowChannelHistory] = useState(false);
-  
+interface ChannelListProps {
+  serverId: string | null;
+  selectedChannelId: string | null;
+  onChannelPress: (channelId: string) => void;
+  server?: Server;
+}
+
+export default function ChannelList({ serverId, selectedChannelId, onChannelPress }: ChannelListProps) {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
-  
-  const { 
-    selectedServer,
-    categories,
-    selectedChannel,
-    setSelectedChannel,
-    currentServerName
-  } = useDiscord();
+  const { user } = useAuth();
+  const [showAddChannel, setShowAddChannel] = useState(false);
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [server, setServer] = useState<Server | null>(null);
+  const isOwner = server?.ownerId === user?.id;
 
-  const mockDMs: DirectMessage[] = [
-    {
-      id: 'dm1',
-      username: 'John Doe',
-      avatar: 'https://github.com/github.png',
-      status: 'online',
-      lastMessage: 'Hey, how are you?',
-      timestamp: '2:30 PM'
-    },
-    {
-      id: 'dm2',
-      username: 'Jane Smith',
-      avatar: 'https://github.com/facebook.png',
-      status: 'idle',
-      lastMessage: 'Check this out!',
-      timestamp: 'Yesterday'
-    },
-    // Add more mock DMs as needed
-  ];
-
-  const toggleCategory = (categoryId: string) => {
-    setExpandedCategories(prev => ({
-      ...prev,
-      [categoryId]: !prev[categoryId]
-    }));
-  };
-
-  const handleChannelPress = (channel: Channel) => {
-    if (channel.type === 'voice') {
-      // Handle voice channel click differently
-      return;
+  useEffect(() => {
+    if (serverId) {
+      loadServerData();
     }
-    setSelectedChannel(channel.id);
-    setShowChannelHistory(true);
-  };
+  }, [serverId]);
 
-  const renderDMList = () => {
-    if (selectedServer === 0) { // Home/DMs server
-      return (
-        <View style={styles.dmSection}>
-          <View style={styles.dmHeader}>
-            <Text style={[styles.dmHeaderText, { color: colors.icon }]}>
-              DIRECT MESSAGES
-            </Text>
-            <Pressable 
-              style={styles.addDMButton}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="add" size={20} color={colors.icon} />
-            </Pressable>
-          </View>
-          
-          {mockDMs.map((dm) => (
-            <Pressable
-              key={dm.id}
-              style={[
-                styles.dmItem,
-                selectedChannel === dm.id && {
-                  backgroundColor: colors.messageInput,
-                }
-              ]}
-              onPress={() => handleChannelPress({ 
-                id: dm.id, 
-                name: dm.username, 
-                type: 'text',
-                categoryId: 'dms'
-              })}
-            >
-              <View style={styles.dmAvatarContainer}>
-                <Image 
-                  source={{ uri: dm.avatar }} 
-                  style={styles.dmAvatar} 
-                />
-                <View style={[
-                  styles.statusIndicator,
-                  { 
-                    backgroundColor: getStatusColor(dm.status),
-                    borderColor: colors.background 
-                  }
-                ]} />
-              </View>
-              <View style={styles.dmContent}>
-                <Text 
-                  style={[Typography.callout, { color: colors.text }]}
-                  numberOfLines={1}
-                >
-                  {dm.username}
-                </Text>
-                {dm.lastMessage && (
-                  <Text 
-                    style={[Typography.footnote, { color: colors.secondaryText }]}
-                    numberOfLines={1}
-                  >
-                    {dm.lastMessage}
-                  </Text>
-                )}
-              </View>
-              {dm.timestamp && (
-                <Text style={[Typography.caption2, { color: colors.secondaryText }]}>
-                  {dm.timestamp}
-                </Text>
-              )}
-            </Pressable>
-          ))}
-        </View>
-      );
+  async function loadServerData() {
+    if (!serverId) return;
+    try {
+      const [serverData, serverChannels] = await Promise.all([
+        database.getServer(serverId),
+        database.getChannels(serverId)
+      ]);
+      setServer(serverData);
+      setChannels(serverChannels);
+    } catch (error) {
+      console.error('Error loading server data:', error);
     }
+  }
 
-    // Return regular channel list for servers
-    return (
-      <>
-        {categories[selectedServer]?.map((category) => (
-          <View key={category.id} style={styles.category}>
-            <Pressable
-              style={styles.categoryHeader}
-              onPress={() => toggleCategory(category.id)}
-            >
-              <Ionicons
-                name={expandedCategories[category.id] ? 'chevron-down' : 'chevron-forward'}
-                size={20}
-                color={colors.icon}
-              />
-              <Text style={[styles.categoryName, { color: colors.icon }]}>
-                {category.name.toUpperCase()}
-              </Text>
-            </Pressable>
+  async function handleAddChannel(name: string, type: Channel['type']) {
+    if (!serverId) return;
+    try {
+      await database.createChannel(serverId, name, type);
+      await loadServerData();
+      setShowAddChannel(false);
+    } catch (error) {
+      console.error('Error creating channel:', error);
+    }
+  }
 
-            {expandedCategories[category.id] && (
-              <View style={styles.channelGroup}>
-                {category.channels.map((channel) => (
-                  <Pressable
-                    key={channel.id}
-                    style={[
-                      styles.channel,
-                      selectedChannel === channel.id && {
-                        backgroundColor: colors.messageInput,
-                      },
-                    ]}
-                    onPress={() => handleChannelPress(channel)}
-                  >
-                    <Ionicons
-                      name={channel.type === 'voice' ? 'mic-outline' : 'chatbubble-outline'}
-                      size={20}
-                      color={colors.icon}
-                    />
-                    <Text
-                      style={[
-                        styles.channelName,
-                        { color: colors.text },
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {channel.name}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
-          </View>
-        ))}
-      </>
-    );
-  };
-
-  const getStatusColor = (status: DirectMessage['status']) => {
-    switch (status) {
-      case 'online': return Colors.discord.green;
-      case 'idle': return Colors.discord.yellow;
-      case 'dnd': return Colors.discord.red;
-      default: return Colors.discord.gray;
+  const getChannelIcon = (type: Channel['type']) => {
+    switch (type) {
+      case 'text':
+        return 'text';
+      case 'voice':
+        return 'volume-medium';
+      case 'announcement':
+        return 'megaphone';
+      default:
+        return 'text';
     }
   };
+
+  if (!serverId) return null;
 
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { borderBottomColor: colors.divider }]}>
+      {isOwner && (
         <Pressable
-          style={styles.serverHeader}
-          onPress={() => setShowServerMenu(true)}
+          style={[styles.addChannelButton, { backgroundColor: colors.channelItem }]}
+          onPress={() => setShowAddChannel(true)}
         >
-          <Text style={[styles.serverName, { color: colors.text }]}>
-            {currentServerName}
-          </Text>
-          <Ionicons name="chevron-down-outline" size={20} color={colors.icon} />
+          <Ionicons name="add" size={24} color={Colors.discord.green} />
+          <Text style={[styles.addChannelText, { color: colors.text }]}>Add Channel</Text>
         </Pressable>
-      </View>
+      )}
 
-      <ScrollView 
-        style={styles.channelList}
-        showsVerticalScrollIndicator={false}
-        contentInsetAdjustmentBehavior="automatic"
-      >
-        {renderDMList()}
-      </ScrollView>
+      {channels.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={[styles.emptyStateText, { color: colors.secondaryText }]}>
+            {isOwner 
+              ? "This server is empty. Click the button above to add channels!" 
+              : "This server doesn't have any channels yet."}
+          </Text>
+        </View>
+      ) : (
+        <ScrollView>
+          {channels.map(channel => (
+            <Pressable
+              key={channel.id}
+              style={[
+                styles.channel,
+                selectedChannelId === channel.id && { backgroundColor: colors.channelItem }
+              ]}
+              onPress={() => onChannelPress(channel.id)}
+            >
+              <View style={styles.channelInfo}>
+                <Ionicons 
+                  name={getChannelIcon(channel.type)} 
+                  size={16} 
+                  color={colors.icon}
+                  style={styles.channelIcon}
+                />
+                <Text style={[styles.channelName, { color: colors.text }]}>
+                  {channel.name}
+                </Text>
+              </View>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
 
-      <UserIndicator onSettingsPress={() => setSettingsVisible(true)} />
-
-      <UserSettings
-        visible={isSettingsVisible}
-        onClose={() => setSettingsVisible(false)}
-      />
-
-      <ChannelHistory
-        visible={showChannelHistory}
-        onClose={() => {
-          setShowChannelHistory(false);
-          setSelectedChannel('');
-        }}
-        channel={categories[selectedServer]?.find(cat => 
-          cat.channels.find(ch => ch.id === selectedChannel)
-        )?.channels.find(ch => ch.id === selectedChannel) || null}
+      <AddChannelModal
+        visible={showAddChannel}
+        onClose={() => setShowAddChannel(false)}
+        onSubmit={handleAddChannel}
       />
     </View>
   );
@@ -272,45 +143,33 @@ export default function ChannelList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.discord.background,
   },
-  header: {
-    height: 44,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-  },
-  serverHeader: {
+  addChannelButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    height: 44,
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 12,
   },
-  serverName: {
+  addChannelText: {
     fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.41,
-  },
-  channelList: {
-    flex: 1,
-  },
-  category: {
-    marginTop: 16,
-  },
-  categoryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    height: 32,
-  },
-  categoryName: {
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: -0.08,
     marginLeft: 8,
   },
-  channelGroup: {
-    marginTop: 4,
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  emptyStateText: {
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: -0.41,
+    textAlign: 'center',
   },
   channel: {
     flexDirection: 'row',
@@ -320,61 +179,17 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     borderRadius: 8,
   },
+  channelInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 8,
+  },
+  channelIcon: {
+    opacity: 0.7,
+  },
   channelName: {
     fontSize: 17,
     letterSpacing: -0.41,
-    marginLeft: 12,
-    flex: 1,
-  },
-  dmSection: {
-    paddingTop: 16,
-  },
-  dmHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    height: 32,
-  },
-  dmHeaderText: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  addDMButton: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dmItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 62,
-    paddingHorizontal: 16,
-    marginHorizontal: 8,
-    borderRadius: 8,
-  },
-  dmAvatarContainer: {
-    position: 'relative',
-    marginRight: 12,
-  },
-  dmAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
-  statusIndicator: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 2,
-  },
-  dmContent: {
-    flex: 1,
-    marginRight: 8,
   },
 });

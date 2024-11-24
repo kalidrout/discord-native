@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { DiscordProvider } from '../context/DiscordContext';
+import { AuthProvider } from '../context/AuthContext';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -30,13 +31,15 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <DiscordProvider>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <StatusBar style="auto" />
-      </DiscordProvider>
+      <AuthProvider>
+        <DiscordProvider>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style="auto" />
+        </DiscordProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

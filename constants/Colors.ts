@@ -55,5 +55,7 @@ export const Colors = {
     red: discordRed,
     gray: discordGray,
     background: discordBackground,
+    messageInput: '#383A40',
+    divider: '#26282C',
   }
 };
