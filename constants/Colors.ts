@@ -1,26 +1,43 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Discord theme colors for both light and dark mode
  */
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+const discordBlurple = '#5865F2';
+const discordGreen = '#57F287';
+const discordYellow = '#FEE75C';
+const discordFuchsia = '#EB459E';
+const discordRed = '#ED4245';
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: '#2E3338',
+    background: '#FFFFFF',
+    tint: discordBlurple,
+    icon: '#747F8D',
+    tabIconDefault: '#747F8D',
+    tabIconSelected: discordBlurple,
+    channelItem: '#EBEDEF',
+    serverList: '#F2F3F5',
+    messageInput: '#EBEDEF',
+    divider: '#E3E5E8',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: '#DCDDDE',
+    background: '#313338',
+    tint: discordBlurple,
+    icon: '#B9BBBE',
+    tabIconDefault: '#B9BBBE',
+    tabIconSelected: discordBlurple,
+    channelItem: '#2B2D31',
+    serverList: '#1E1F22',
+    messageInput: '#383A40',
+    divider: '#2D2F32',
   },
+  discord: {
+    blurple: discordBlurple,
+    green: discordGreen,
+    yellow: discordYellow,
+    fuchsia: discordFuchsia,
+    red: discordRed,
+  }
 };
